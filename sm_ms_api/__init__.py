@@ -8,14 +8,15 @@ class SMMS(object):
         self.header = {"Authorization": token}
 
     def upload_image(self, path) -> str:
-        files = {'smfile': open(path, 'rb')}
-        res = requests.post(self.root + 'upload', files=files, headers=self.header).json()
-        if res['success']:
-            return res['data']['url']
-        elif res['code'] == 'image_repeated':
-            return res['images']
-        else:
-            raise ImageUploadError(res['message'])
+        with open(path, 'rb') as file:
+            files = {'smfile': file}
+            res = requests.post(self.root + 'upload', files=files, headers=self.header).json()
+            if res['success']:
+                return res['data']['url']
+            elif res['code'] == 'image_repeated':
+                return res['images']
+            else:
+                raise ImageUploadError(res['message'])
 
 
 class ImageUploadError(Exception):

@@ -1,3 +1,6 @@
+from io import BytesIO
+from pathlib import Path
+
 import requests
 
 
@@ -7,22 +10,19 @@ class SMMS(object):
     def __init__(self, token: str):
         self.header = {"Authorization": token}
 
-    def upload_image(self, path) -> str:
-        err: str = ''
-        try:
-            with open(path, 'rb') as file:
-                files = {'smfile': file}
-                res = requests.post(self.root + 'upload', files=files, headers=self.header)
-                err = res.text
-                res = res.json()
-                if res['success']:
-                    return res['data']['url']
-                elif res['code'] == 'image_repeated':
-                    return res['images']
-                else:
-                    raise ImageUploadError(res['message'])
-        except requests.exceptions.JSONDecodeError:
-            raise Exception(err)
+    def upload_image(self, file: Path | str | BytesIO, name: str = None) -> str:
+        if isinstance(file, str) or isinstance(file, Path):
+                files = {"smfile": open(file, "rb")}
+        else:
+            files = {"smfile": (name, file.getvalue())}
+        res = requests.post(self.root + "upload", files=files, headers=self.header)
+        res = res.json()
+        if res["success"]:
+            return res["data"]["url"]
+        elif res["code"] == "image_repeated":
+            return res["images"]
+        else:
+            raise ImageUploadError(res["message"])
 
 
 class ImageUploadError(Exception):
